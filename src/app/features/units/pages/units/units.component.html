@@ -1,0 +1,76 @@
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold text-slate-800">Units</h1>
+    <p class="mt-1 text-sm text-slate-500">The units your items are sold in.</p>
+  </div>
+
+  <button
+    type="button"
+    (click)="openDialog()"
+    class="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
+  >
+    <mat-icon>add</mat-icon>
+    Add unit
+  </button>
+</div>
+
+<div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  @if (loading()) {
+    <p class="p-6 text-sm text-slate-500">Loading units...</p>
+  } @else if (errorMessage()) {
+    <div class="p-6">
+      <p class="text-sm text-red-600">{{ errorMessage() }}</p>
+      <button
+        type="button"
+        (click)="load()"
+        class="mt-3 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+      >
+        Retry
+      </button>
+    </div>
+  } @else if (units().length === 0) {
+    <div class="p-10 text-center text-sm text-slate-500">
+      No units yet. Click "Add unit" to create the first one.
+    </div>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="px-6 py-3 text-left font-medium text-slate-600">Unit name</th>
+            <th class="px-6 py-3 text-right font-medium text-slate-600">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (unit of units(); track unit.id) {
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-3 text-slate-800">{{ unit.name }}</td>
+              <td class="whitespace-nowrap px-6 py-3 text-right">
+                <button
+                  type="button"
+                  (click)="openDialog(unit)"
+                  [attr.aria-label]="'Edit ' + unit.name"
+                  class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  type="button"
+                  (click)="deleteUnit(unit)"
+                  [attr.aria-label]="'Delete ' + unit.name"
+                  class="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="border-t border-slate-200 bg-slate-50 px-6 py-2 text-xs text-slate-500">
+      {{ units().length }} {{ units().length === 1 ? 'unit' : 'units' }}
+    </div>
+  }
+</div>
