@@ -1,0 +1,48 @@
+<form [formRoot]="companyForm" class="p-6">
+  @let nameField = companyForm.name();
+
+  <h2 class="text-lg font-semibold text-slate-800">
+    {{ isEdit ? 'Edit company' : 'Add company' }}
+  </h2>
+
+  <div class="mt-5">
+    <label for="company-name" class="block text-sm font-medium text-slate-700">Company name</label>
+    <input
+      id="company-name"
+      type="text"
+      autocomplete="off"
+      [formField]="companyForm.name"
+      (input)="serverError.set(null)"
+      class="mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none focus:ring-2 focus:ring-indigo-500"
+      [class]="
+        (nameField.touched() && nameField.invalid()) || serverError()
+          ? 'border-red-500'
+          : 'border-slate-300'
+      "
+    />
+
+    @if (nameField.touched() && nameField.invalid()) {
+      <p class="mt-1 text-xs text-red-600">{{ nameField.errors()[0]?.message }}</p>
+    } @else if (serverError()) {
+      <p class="mt-1 text-xs text-red-600">{{ serverError() }}</p>
+    }
+  </div>
+
+  <div class="mt-6 flex justify-end gap-3">
+    <button
+      type="button"
+      (click)="cancel()"
+      class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+    >
+      Cancel
+    </button>
+
+    <button
+      type="submit"
+      [disabled]="companyForm().submitting()"
+      class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {{ companyForm().submitting() ? 'Saving...' : 'Save' }}
+    </button>
+  </div>
+</form>
