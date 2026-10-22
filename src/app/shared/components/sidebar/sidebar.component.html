@@ -1,0 +1,32 @@
+<nav class="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
+  <a
+    routerLink="/"
+    (click)="navigated.emit()"
+    class="flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 px-5"
+  >
+    <mat-icon class="text-indigo-600">receipt_long</mat-icon>
+    <span class="text-lg font-semibold text-slate-800">Billing System</span>
+  </a>
+
+  <ul class="flex-1 space-y-1 overflow-y-auto p-3">
+    @for (item of navItems; track item.route) {
+      <li>
+        <a
+          [routerLink]="item.route"
+          routerLinkActive
+          #rla="routerLinkActive"
+          (click)="navigated.emit()"
+          class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+          [class]="
+            rla.isActive
+              ? 'bg-indigo-50 text-indigo-700'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          "
+        >
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+</nav>
