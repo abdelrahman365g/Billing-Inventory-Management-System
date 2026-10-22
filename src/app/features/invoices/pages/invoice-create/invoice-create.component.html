@@ -1,0 +1,434 @@
+<div>
+  <h1 class="text-2xl font-semibold text-slate-800">New sales invoice</h1>
+  <p class="mt-1 text-sm text-slate-500">Record a sale: pick a client, add items, then save.</p>
+</div>
+
+@if (loading()) {
+  <p class="mt-6 text-sm text-slate-500">Loading clients and items...</p>
+} @else if (loadError()) {
+  <div class="mt-6">
+    <p class="text-sm text-red-600">{{ loadError() }}</p>
+    <button
+      type="button"
+      (click)="loadLookups()"
+      class="mt-3 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+    >
+      Retry
+    </button>
+  </div>
+} @else {
+  <form [formRoot]="invoiceForm" (keydown.enter)="blockEnterSubmit($event)" class="mt-6 space-y-6">
+    @let dateField = invoiceForm.billDate();
+    @let clientField = invoiceForm.clientId();
+    @let percentField = invoiceForm.percentDiscount();
+    @let valueField = invoiceForm.valueDiscount();
+    @let paidField = invoiceForm.paidUp();
+    @let employeeField = invoiceForm.employeeName();
+    @let requestDateField = invoiceForm.requestDate();
+    @let startField = invoiceForm.startTime();
+    @let endField = invoiceForm.endTime();
+
+    <!-- 1. Bill details -->
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-base font-semibold text-slate-800">Bill details</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-3">
+        <div>
+          <label for="bill-number" class="block text-sm font-medium text-slate-700">
+            Bill number
+          </label>
+          <input
+            id="bill-number"
+            type="text"
+            disabled
+            value="Auto-generated"
+            [class]="readonlyClass"
+          />
+        </div>
+
+        <div>
+          <label for="bill-date" class="block text-sm font-medium text-slate-700">Bill date</label>
+          <input
+            id="bill-date"
+            type="date"
+            [formField]="invoiceForm.billDate"
+            [class]="fieldClass(dateField.touched() && dateField.invalid())"
+          />
+          @if (dateField.touched() && dateField.invalid()) {
+            <p class="mt-1 text-xs text-red-600">{{ dateField.errors()[0]?.message }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="bill-client" class="block text-sm font-medium text-slate-700">
+            Client name
+          </label>
+          <select
+            id="bill-client"
+            [formField]="invoiceForm.clientId"
+            [class]="fieldClass(clientField.touched() && clientField.invalid())"
+          >
+            <option value="">Select a client</option>
+            @for (client of clients(); track client.id) {
+              <option [value]="client.id">{{ client.name }}</option>
+            }
+          </select>
+          @if (clientField.touched() && clientField.invalid()) {
+            <p class="mt-1 text-xs text-red-600">{{ clientField.errors()[0]?.message }}</p>
+          } @else if (clients().length === 0) {
+            <p class="mt-1 text-xs text-slate-500">No clients yet. Add a client first.</p>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Item details -->
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-base font-semibold text-slate-800">Item details</h2>
+
+      <div (keydown.enter)="onEntryEnter($event)">
+        @let itemField = entryForm.itemId();
+        @let priceField = entryForm.sellingPrice();
+        @let quantityField = entryForm.quantity();
+        @let discountField = entryForm.discount();
+
+        <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          <div class="lg:col-span-2">
+            <label for="entry-item" class="block text-sm font-medium text-slate-700">
+              Item name
+            </label>
+            <select
+              id="entry-item"
+              [formField]="entryForm.itemId"
+              (change)="onItemChange($event)"
+              [class]="fieldClass(itemField.touched() && itemField.invalid())"
+            >
+              <option value="">Select an item</option>
+              @for (item of items(); track item.code) {
+                <option [value]="item.code">{{ item.name }}</option>
+              }
+            </select>
+            @if (itemField.touched() && itemField.invalid()) {
+              <p class="mt-1 text-xs text-red-600">{{ itemField.errors()[0]?.message }}</p>
+            } @else if (selectedItem(); as item) {
+              <p class="mt-1 text-xs text-slate-500">Unit: {{ item.unitName }}</p>
+            }
+          </div>
+
+          <div>
+            <label for="entry-price" class="block text-sm font-medium text-slate-700">
+              Selling price
+            </label>
+            <input
+              id="entry-price"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              placeholder="0.00"
+              [formField]="entryForm.sellingPrice"
+              [class]="fieldClass(priceField.touched() && priceField.invalid())"
+            />
+            @if (priceField.touched() && priceField.invalid()) {
+              <p class="mt-1 text-xs text-red-600">{{ priceField.errors()[0]?.message }}</p>
+            }
+          </div>
+
+          <div>
+            <label for="entry-quantity" class="block text-sm font-medium text-slate-700">
+              Quantity
+            </label>
+            <input
+              id="entry-quantity"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              placeholder="0"
+              [formField]="entryForm.quantity"
+              [class]="fieldClass(quantityField.touched() && quantityField.invalid())"
+            />
+            @if (quantityField.touched() && quantityField.invalid()) {
+              <p class="mt-1 text-xs text-red-600">{{ quantityField.errors()[0]?.message }}</p>
+            }
+          </div>
+
+          <div>
+            <label for="entry-discount" class="block text-sm font-medium text-slate-700">
+              Discount
+            </label>
+            <input
+              id="entry-discount"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              placeholder="0.00"
+              [formField]="entryForm.discount"
+              [class]="fieldClass(discountField.touched() && discountField.invalid())"
+            />
+            @if (discountField.touched() && discountField.invalid()) {
+              <p class="mt-1 text-xs text-red-600">{{ discountField.errors()[0]?.message }}</p>
+            }
+          </div>
+        </div>
+
+        <div class="mt-5 flex flex-wrap items-end justify-between gap-4">
+          <div class="w-full sm:w-56">
+            <label for="entry-total" class="block text-sm font-medium text-slate-700">
+              Total value
+            </label>
+            <input
+              id="entry-total"
+              type="text"
+              disabled
+              [value]="entryTotal() | number: '1.2-2'"
+              [class]="readonlyClass"
+            />
+          </div>
+
+          <button
+            type="button"
+            (click)="addLine()"
+            class="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
+          >
+            <mat-icon>add</mat-icon>
+            Add
+          </button>
+        </div>
+      </div>
+
+      <!-- Lines table -->
+      <div class="mt-6 overflow-hidden rounded-lg border border-slate-200">
+        @if (lines().length === 0) {
+          <p class="p-6 text-center text-sm text-slate-500">No items added yet.</p>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium text-slate-600">Item code</th>
+                  <th class="px-4 py-3 text-left font-medium text-slate-600">Item name</th>
+                  <th class="px-4 py-3 text-left font-medium text-slate-600">Unit</th>
+                  <th class="px-4 py-3 text-right font-medium text-slate-600">Quantity</th>
+                  <th class="px-4 py-3 text-right font-medium text-slate-600">Selling price</th>
+                  <th class="px-4 py-3 text-right font-medium text-slate-600">Discount</th>
+                  <th class="px-4 py-3 text-right font-medium text-slate-600">Total balance</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (line of lines(); track $index) {
+                  <tr>
+                    <td class="px-4 py-2 text-slate-500">{{ line.itemCode }}</td>
+                    <td class="px-4 py-2 text-slate-800">{{ line.itemName }}</td>
+                    <td class="px-4 py-2 text-slate-600">{{ line.unitName }}</td>
+                    <td class="px-4 py-2 text-right text-slate-800">{{ line.quantity }}</td>
+                    <td class="px-4 py-2 text-right text-slate-800">
+                      {{ line.sellingPrice | number: '1.2-2' }}
+                    </td>
+                    <td class="px-4 py-2 text-right text-slate-600">
+                      {{ line.discount | number: '1.2-2' }}
+                    </td>
+                    <td class="px-4 py-2 text-right font-medium text-slate-800">
+                      {{ line.total | number: '1.2-2' }}
+                    </td>
+                    <td class="px-4 py-2 text-right">
+                      <button
+                        type="button"
+                        (click)="removeLine($index)"
+                        [attr.aria-label]="'Remove ' + line.itemName"
+                        class="rounded-lg p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      @if (linesError()) {
+        <p class="mt-2 text-xs text-red-600">{{ linesError() }}</p>
+      }
+    </section>
+
+    <!-- 3. Other details -->
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-base font-semibold text-slate-800">Other details</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div>
+          <label for="bills-total" class="block text-sm font-medium text-slate-700">
+            Bills total
+          </label>
+          <input
+            id="bills-total"
+            type="text"
+            disabled
+            [value]="billsTotal() | number: '1.2-2'"
+            [class]="readonlyClass"
+          />
+        </div>
+
+        <div>
+          <label for="percent-discount" class="block text-sm font-medium text-slate-700">
+            Percentage discount
+          </label>
+          <input
+            id="percent-discount"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            [formField]="invoiceForm.percentDiscount"
+            [class]="fieldClass(percentField.touched() && percentField.invalid())"
+          />
+          @if (percentField.touched() && percentField.invalid()) {
+            <p class="mt-1 text-xs text-red-600">{{ percentField.errors()[0]?.message }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="value-discount" class="block text-sm font-medium text-slate-700">
+            Value discount
+          </label>
+          <input
+            id="value-discount"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            [formField]="invoiceForm.valueDiscount"
+            [class]="fieldClass(valueField.touched() && valueField.invalid())"
+          />
+          @if (valueField.touched() && valueField.invalid()) {
+            <p class="mt-1 text-xs text-red-600">{{ valueField.errors()[0]?.message }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="net" class="block text-sm font-medium text-slate-700">The NET</label>
+          <input
+            id="net"
+            type="text"
+            disabled
+            [value]="net() | number: '1.2-2'"
+            [class]="readonlyClass"
+          />
+        </div>
+
+        <div>
+          <label for="paid-up" class="block text-sm font-medium text-slate-700">Paid up</label>
+          <input
+            id="paid-up"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            [formField]="invoiceForm.paidUp"
+            [class]="fieldClass(paidField.touched() && paidField.invalid())"
+          />
+          @if (paidField.touched() && paidField.invalid()) {
+            <p class="mt-1 text-xs text-red-600">{{ paidField.errors()[0]?.message }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="rest" class="block text-sm font-medium text-slate-700">The Rest</label>
+          <input
+            id="rest"
+            type="text"
+            disabled
+            [value]="rest() | number: '1.2-2'"
+            [class]="readonlyClass"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Request a form -->
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-base font-semibold text-slate-800">Request a form</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label for="employee-name" class="block text-sm font-medium text-slate-700">
+            Employee name
+          </label>
+          <input
+            id="employee-name"
+            type="text"
+            autocomplete="off"
+            [formField]="invoiceForm.employeeName"
+            [class]="fieldClass(employeeField.touched() && employeeField.invalid())"
+          />
+          @if (employeeField.touched() && employeeField.invalid()) {
+            <p class="mt-1 text-xs text-red-600">{{ employeeField.errors()[0]?.message }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="request-date" class="block text-sm font-medium text-slate-700">Date</label>
+          <input
+            id="request-date"
+            type="date"
+            [formField]="invoiceForm.requestDate"
+            [class]="fieldClass(requestDateField.touched() && requestDateField.invalid())"
+          />
+          @if (requestDateField.touched() && requestDateField.invalid()) {
+            <p class="mt-1 text-xs text-red-600">{{ requestDateField.errors()[0]?.message }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="start-time" class="block text-sm font-medium text-slate-700">
+            Start time
+          </label>
+          <input
+            id="start-time"
+            type="time"
+            [formField]="invoiceForm.startTime"
+            [class]="fieldClass(startField.touched() && startField.invalid())"
+          />
+          @if (startField.touched() && startField.invalid()) {
+            <p class="mt-1 text-xs text-red-600">{{ startField.errors()[0]?.message }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="end-time" class="block text-sm font-medium text-slate-700">End time</label>
+          <input
+            id="end-time"
+            type="time"
+            [formField]="invoiceForm.endTime"
+            [class]="fieldClass(endField.touched() && endField.invalid())"
+          />
+          @if (endField.touched() && endField.invalid()) {
+            <p class="mt-1 text-xs text-red-600">{{ endField.errors()[0]?.message }}</p>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Result + Save -->
+    @if (savedBillNumber() !== null) {
+      <div role="status" class="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
+        Invoice saved. Bill number: <strong>{{ savedBillNumber() }}</strong>
+      </div>
+    }
+
+    @if (serverError()) {
+      <div role="alert" class="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ serverError() }}
+      </div>
+    }
+
+    <div class="flex justify-end">
+      <button
+        type="submit"
+        [disabled]="invoiceForm().submitting()"
+        class="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {{ invoiceForm().submitting() ? 'Saving...' : 'Save' }}
+      </button>
+    </div>
+  </form>
+}
