@@ -49,6 +49,12 @@ interface BillDetailRow {
     start_time: string;
     end_time: string;
   } | null;
+  payments: {
+    payment_number: number;
+    payment_date: string;
+    amount: number;
+    note: string | null;
+  }[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -137,6 +143,12 @@ export class BillsService {
             endTime: row.request.end_time.slice(0, 5),
           }
         : null,
+      payments: (row.payments ?? []).map((p) => ({
+        number: p.payment_number,
+        date: p.payment_date,
+        amount: Number(p.amount),
+        note: p.note,
+      })),
     };
   }
 }

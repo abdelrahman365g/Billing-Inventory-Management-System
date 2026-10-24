@@ -80,4 +80,13 @@ export interface BillDetail {
   rest: number;
   lines: BillDetailLine[];
   request: BillRequestDetail | null;
+  payments: BillPayment[];
+}
+
+// -------- Payments -------
+export interface BillPayment {
+  number: number;
+  date: string;
+  amount: number;
+  note: string | null;
 }
