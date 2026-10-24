@@ -128,13 +128,39 @@
             </div>
           </dl>
         } @else {
-          <p class="mt-2 rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+          <p
+            class="mt-2 rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500"
+          >
             No request form was recorded for this bill.
           </p>
         }
       </div>
     </div>
-
+    <h3 class="mt-6 text-sm font-semibold text-slate-800">Payments after the bill</h3>
+    @if (b.payments.length === 0) {
+      <p class="mt-2 rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+        No later payments. "Paid up" above is what was paid when the bill was created.
+      </p>
+    } @else {
+      <ul class="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 text-sm">
+        @for (p of b.payments; track p.number) {
+          <li class="flex items-center justify-between gap-4 px-4 py-2">
+            <div class="min-w-0">
+              <p class="text-slate-800">
+                Payment #{{ p.number }} &middot; {{ p.date | date: 'mediumDate' }}
+              </p>
+              @if (p.note) {
+                <p class="truncate text-xs text-slate-500">{{ p.note }}</p>
+              }
+            </div>
+            <span class="shrink-0 font-medium text-green-700">{{
+              p.amount | number: '1.2-2'
+            }}</span>
+          </li>
+        }
+      </ul>
+      <p class="mt-2 text-xs text-slate-500">"Paid up" above already includes these payments.</p>
+    }
     <div class="mt-6 flex justify-end">
       <button
         type="button"
