@@ -70,6 +70,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'payments',
+        loadComponent: () =>
+          import('./features/payments/pages/payment-create/payment-create.component').then(
+            (m) => m.PaymentCreateComponent,
+          ),
+      },
+      {
         path: 'not-found',
         loadComponent: () =>
           import('./features/static-pages/not-found/not-found.component').then(
