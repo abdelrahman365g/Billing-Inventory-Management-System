@@ -3,7 +3,6 @@ import { inject } from '@angular/core/primitives/di';
 import { Supabase } from './supabase';
 import { Router } from '@angular/router';
 import { User } from '@supabase/supabase-js';
-import { Observable } from 'rxjs';
 
 @Service()
 export class Auth {
@@ -38,9 +37,9 @@ export class Auth {
     return { error: null };
   }
 
-  logout() {
-    this.supabase.client.auth.signOut();
+  async logout() {
+    await this.supabase.client.auth.signOut();
     this._user.set(undefined);
-    this.router.navigate(['/login']);
+    await this.router.navigate(['/auth/login']);
   }
 }
