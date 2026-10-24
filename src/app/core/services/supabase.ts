@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { createClient, SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 
 @Service()
